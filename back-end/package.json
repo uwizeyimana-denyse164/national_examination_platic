@@ -8,7 +8,8 @@
     "start": "node --no-deprecation server.js",
     "dev": "nodemon --no-deprecation server.js",
     "seed": "node seed.js",
-    "seed-sql": "node scripts/seedDatabase.js"
+    "seed-sql": "node scripts/seedDatabase.js",
+    "seed-admin": "node scripts/seedAdmin.js"
   },
   "keywords": [],
   "author": "",

@@ -29,7 +29,7 @@ async function seed() {
   }
   console.log(`Inserted ${users.length} users.`);
 
-  // ── Vehicles ───────────────────────────────────────────────
+  
   const vehicles = [
     ['RAD 001A', 'Toyota',     'RAV4',      2022, 'SUV',     28500000.00, 'Available',         1],
     ['RAD 002B', 'Honda',      'Civic',      2021, 'Sedan',   18500000.00, 'Available',         1],
@@ -87,7 +87,7 @@ async function seed() {
   }
   console.log(`Inserted ${promotions.length} promotions.`);
 
-  // ── Promotion_Vehicles ─────────────────────────────────────
+  
   const promoVehicles = [
     [1, 1, 'Good'],
     [1, 2, 'Excellent'],

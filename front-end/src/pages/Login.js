@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const [form,    setForm]    = useState({ username: '', password: '' });
   const [error,   setError]   = useState('');
   const [errors,  setErrors]  = useState({});
   const [loading, setLoading] = useState(false);
+  const [creatingAccount, setCreatingAccount] = useState(false);
 
   const validateUsername = (val) => {
     if (!val) return 'Username is required';
-    if (!/^[A-Za-z0-9_]+$/.test(val)) return 'Letters, digits and _ only';
+    if (!/^[A-Za-z0-9_]{3,100}$/.test(val)) return 'Use 3-100 letters, digits, or _';
     return '';
   };
 
@@ -20,12 +21,27 @@ export default function Login() {
     if (err) { setErrors({ username: err }); return; }
     setErrors({}); setError(''); setLoading(true);
     try {
-      await login(form.username, form.password);
-    } catch {
-      setError('Invalid username or password');
+      if (creatingAccount) {
+        await register(form.username, form.password);
+      } else {
+        await login(form.username, form.password);
+      }
+    } catch (err) {
+      if (creatingAccount) {
+        setError(err.response?.data?.message
+          || 'Cannot reach the server. Make sure the backend is running on port 5000.');
+      } else {
+        setError(err.response ? 'Invalid username or password' : 'Cannot reach the server. Make sure the backend is running on port 5000.');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleAccountMode = () => {
+    setCreatingAccount(!creatingAccount);
+    setError('');
+    setErrors({});
   };
 
   return (
@@ -41,15 +57,14 @@ export default function Login() {
         {error && (
           <div className="bg-red-50 border border-red-300 text-red-800 rounded-xl px-4 py-3 text-sm mb-4">{error}</div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-semibold text-blue-900 mb-1.5">
-              Username<span className="text-red-500 ml-0.5"></span>
+              Username
             </label>
             <input
               type="text"
-              placeholder="Letters, digits and _ only"
+              placeholder="3-100 letters, digits, or _"
               value={form.username}
               onChange={e => {
                 const val = e.target.value;
@@ -71,13 +86,15 @@ export default function Login() {
 
           <div>
             <label className="block text-sm font-semibold text-blue-900 mb-1.5">
-              Password<span className="text-red-500 ml-0.5"></span>
+              Password
             </label>
             <input
               type="password"
               placeholder="Enter your password"
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
+              minLength={creatingAccount ? 8 : undefined}
+              maxLength={creatingAccount ? 72 : undefined}
               required
               className="w-full rounded-xl border border-gray-300 text-gray-900 text-sm px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-400 transition"
             />
@@ -87,11 +104,16 @@ export default function Login() {
             type="submit" disabled={loading}
             className="w-full py-3 rounded-xl bg-accent-500 hover:bg-accent-600 text-white font-semibold text-sm transition-all duration-200 shadow-md disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (creatingAccount ? 'Creating account...' : 'Signing in...') : (creatingAccount ? 'Create Account' : 'Sign In')}
           </button>
         </form>
 
-        
+        <p className="text-center text-sm text-gray-600 mt-5">
+          {creatingAccount ? 'Already have an account?' : "Don't have an account?"}{' '}
+          <button type="button" onClick={toggleAccountMode} className="font-semibold text-blue-900 hover:underline">
+            {creatingAccount ? 'Sign in' : 'Create account'}
+          </button>
+        </p>
       </div>
     </div>
   );

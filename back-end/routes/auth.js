@@ -25,6 +25,38 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post('/register', async (req, res) => {
+  const { username, password } = req.body || {};
+  const normalizedUsername = typeof username === 'string' ? username.trim() : '';
+
+  if (!/^[A-Za-z0-9_]{3,100}$/.test(normalizedUsername)) {
+    return res.status(400).json({ message: 'Username must be 3-100 characters using letters, digits, or _' });
+  }
+  if (typeof password !== 'string' || Buffer.byteLength(password, 'utf8') < 8 || Buffer.byteLength(password, 'utf8') > 72) {
+    return res.status(400).json({ message: 'Password must be 8-72 bytes' });
+  }
+
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    const [result] = await db.query(
+      'INSERT INTO Users (UserName, Password, Role) VALUES (?, ?, ?)',
+      [normalizedUsername, hash, 'staff']
+    );
+    req.session.user = {
+      id: result.insertId,
+      username: normalizedUsername,
+      role: 'staff',
+    };
+    res.status(201).json({ message: 'Account created successfully', user: req.session.user });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'That username is already taken' });
+    }
+    console.error('Registration error:', err.message);
+    res.status(500).json({ message: 'Unable to create account' });
+  }
+});
+
 router.post('/logout', (req, res) => {
   req.session.destroy(() => res.json({ message: 'Logged out' }));
 });
